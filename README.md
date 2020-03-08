@@ -39,3 +39,4 @@ ARGS:
 #### TODO
 
 - Add proper error handling
+- Add tests
