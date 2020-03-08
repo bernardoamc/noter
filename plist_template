@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.rust.noter</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/bernardo/src/personal/noter/target/debug/noter</string>
+    <string>check</string>
+  </array>
+
+  <key>Nice</key>
+  <integer>1</integer>
+
+  <key>StartInterval</key>
+  <integer>60</integer>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardErrorPath</key>
+  <string>/tmp/noter.err</string>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/noter.out</string>
+</dict>
+</plist>
