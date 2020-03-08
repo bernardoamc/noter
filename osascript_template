@@ -1,3 +1,9 @@
 on run argv
-    tell application (path to frontmost application as text) to display dialog quoted form of (item 1 of argv) with title "Noter Reminder" buttons {"OK"}
+    tell application (path to frontmost application as text) to display dialog quoted form of (item 1 of argv) with title "Noter Reminder" buttons {"Dismiss", "Lock"} default button "Lock" giving up after 5
+
+    if button returned of result = "Dismiss" then
+        return
+    end if
+
+    tell application "Finder" to sleep
 end run
