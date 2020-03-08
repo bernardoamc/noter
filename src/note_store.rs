@@ -78,6 +78,7 @@ impl NoteStore {
             .open(&noter_path.into())
             .unwrap();
 
+        let schedule = note.schedule.clone();
         let mut hasher = DefaultHasher::new();
         note.text.hash(&mut hasher);
 
@@ -86,6 +87,7 @@ impl NoteStore {
             value: note,
         };
         serde_json::to_writer(&mut writer, &add_op).unwrap();
+        println!("Note scheduled for: {}", schedule);
 
         Ok(())
     }
