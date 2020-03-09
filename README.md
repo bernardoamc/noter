@@ -2,6 +2,8 @@
 
 A small notification system for macOS
 
+![Notification image](examples/noter_reminder.png "Notification")
+
 ### Usage
 
 ```
