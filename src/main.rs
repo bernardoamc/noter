@@ -66,7 +66,7 @@ fn setup_launchd() {
         Command::new("launchctl")
             .args(&["load", launch_agents_path.as_path().to_str().unwrap()])
             .output()
-            .expect("failed to execute osascript");
+            .expect("failed to execute launchctl load");
     }
 }
 
