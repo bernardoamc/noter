@@ -8,9 +8,37 @@ use std::hash::{Hash, Hasher};
 use std::io::BufReader;
 use std::path::PathBuf;
 use std::process::Command;
+use std::result;
 
 const OSASCRIPT_TEMPLATE: &'static str = include_str!("../osascript_template");
 const MAX_SCHEDULED_TIME_DIFF: i64 = 1;
+
+#[derive(Debug)]
+pub enum NoterError {
+    LoadError(std::io::Error),
+    ParseError(serde_json::Error),
+    Mess(&'static str),
+}
+
+impl From<std::io::Error> for NoterError {
+    fn from(e: std::io::Error) -> Self {
+        NoterError::LoadError(e)
+    }
+}
+
+impl From<serde_json::Error> for NoterError {
+    fn from(e: serde_json::Error) -> Self {
+        NoterError::ParseError(e)
+    }
+}
+
+impl From<&'static str> for NoterError {
+    fn from(e: &'static str) -> Self {
+        NoterError::Mess(e)
+    }
+}
+
+pub type Result<T> = result::Result<T, NoterError>;
 
 #[derive(Serialize, Deserialize, Debug)]
 enum Operation {
@@ -43,16 +71,16 @@ pub struct NoteStore {
 }
 
 impl NoteStore {
-    pub fn load(noter_path: impl Into<PathBuf>) -> Result<NoteStore, String> {
+    pub fn load(noter_path: impl Into<PathBuf>) -> Result<NoteStore> {
         let mut notes_map: HashMap<u64, Note> = HashMap::new();
         let noter_path = noter_path.into();
 
-        let noter = OpenOptions::new().read(true).open(&noter_path).unwrap();
+        let noter = OpenOptions::new().read(true).open(&noter_path)?;
         let reader = BufReader::new(noter);
         let mut stream = Deserializer::from_reader(reader).into_iter::<Operation>();
 
         while let Some(operation) = stream.next() {
-            let operation = operation.unwrap();
+            let operation = operation?;
 
             match operation {
                 Operation::Add { key, value } => {
@@ -70,13 +98,12 @@ impl NoteStore {
         })
     }
 
-    pub fn add(noter_path: impl Into<PathBuf>, note: Note) -> Result<(), String> {
+    pub fn add(noter_path: impl Into<PathBuf>, note: Note) -> Result<()> {
         let mut writer = OpenOptions::new()
             .write(true)
             .create(true)
             .append(true)
-            .open(&noter_path.into())
-            .unwrap();
+            .open(&noter_path.into())?;
 
         let schedule = note.schedule.clone();
         let mut hasher = DefaultHasher::new();
@@ -86,31 +113,31 @@ impl NoteStore {
             key: hasher.finish(),
             value: note,
         };
-        serde_json::to_writer(&mut writer, &add_op).unwrap();
+        serde_json::to_writer(&mut writer, &add_op)?;
         println!("Note scheduled for: {}", schedule);
 
         Ok(())
     }
 
-    pub fn check(&mut self) {
+    pub fn check(&mut self) -> Result<()> {
         let mut writer = OpenOptions::new()
             .write(true)
             .create(true)
             .append(true)
-            .open(&self.path)
-            .unwrap();
+            .open(&self.path)?;
 
         let due_notes = self.notes.iter().filter(|&(_key, note)| is_note_due(note));
 
         for (key, note) in due_notes {
             Command::new("osascript")
                 .args(&["-e", OSASCRIPT_TEMPLATE, &note.text])
-                .output()
-                .expect("failed to execute osascript");
+                .output()?;
 
             let remove_op = Operation::Remove { key: key.clone() };
-            serde_json::to_writer(&mut writer, &remove_op).unwrap();
+            serde_json::to_writer(&mut writer, &remove_op)?;
         }
+
+        Ok(())
     }
 }
 

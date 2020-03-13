@@ -1,4 +1,4 @@
-use note_store::{Note, NoteStore};
+use note_store::{Note, NoteStore, Result};
 mod note_store;
 
 use chrono::{NaiveDateTime, NaiveTime};
@@ -44,14 +44,16 @@ enum CommandOption {
     Check {},
 }
 
-fn main() {
+fn main() -> Result<()> {
     let options = CommandOption::from_args();
-    setup_launchd();
-    run(options);
+    setup_launchd()?;
+    run(options)?;
+
+    Ok(())
 }
 
-fn setup_launchd() {
-    let mut launch_agents_path = dirs::home_dir().unwrap();
+fn setup_launchd() -> Result<()> {
+    let mut launch_agents_path = dirs::home_dir().ok_or("Couldn't infer HOME path")?;
     launch_agents_path.push("Library/LaunchAgents/com.rust.noter.plist");
 
     if !Path::new(launch_agents_path.as_path()).exists() {
@@ -60,17 +62,23 @@ fn setup_launchd() {
             .create_new(true)
             .open(&launch_agents_path)
             .unwrap();
-        plist_writer.write_all(PLIST_TEMPLATE.as_bytes()).unwrap();
-        plist_writer.flush().unwrap();
+        plist_writer.write_all(PLIST_TEMPLATE.as_bytes())?;
+        plist_writer.flush()?;
+
+        let launch_agents_path = launch_agents_path
+            .as_path()
+            .to_str()
+            .ok_or("Couldn't obtain LaunchAgents path")?;
 
         Command::new("launchctl")
-            .args(&["load", launch_agents_path.as_path().to_str().unwrap()])
-            .output()
-            .expect("failed to execute launchctl load");
+            .args(&["load", launch_agents_path])
+            .output()?;
     }
+
+    Ok(())
 }
 
-fn run(options: CommandOption) {
+fn run(options: CommandOption) -> Result<()> {
     let mut noter_path = dirs::home_dir().unwrap();
     noter_path.push(".noter");
 
@@ -81,11 +89,11 @@ fn run(options: CommandOption) {
             time,
         } => {
             let new_note = Note::new(note, datetime, time);
-            NoteStore::add(noter_path, new_note).unwrap();
+            Ok(NoteStore::add(noter_path, new_note)?)
         }
         CommandOption::Check {} => {
-            let mut note_store = NoteStore::load(noter_path).unwrap();
-            note_store.check();
+            let mut note_store = NoteStore::load(noter_path)?;
+            Ok(note_store.check()?)
         }
     }
 }

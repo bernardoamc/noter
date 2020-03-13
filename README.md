@@ -41,5 +41,4 @@ ARGS:
 #### TODO
 
 - Figure out how to infer the path of the running program to generate the plist file correctly
-- Add proper error handling
 - Add tests
