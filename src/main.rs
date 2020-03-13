@@ -1,5 +1,8 @@
-use note_store::{Note, NoteStore, Result};
 mod note_store;
+use note_store::{Note, NoteStore};
+
+mod error;
+use error::Result;
 
 use chrono::{NaiveDateTime, NaiveTime};
 use std::fs::OpenOptions;

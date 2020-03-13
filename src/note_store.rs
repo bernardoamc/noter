@@ -1,3 +1,5 @@
+use crate::error::Result;
+
 use chrono::{Local, NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 use serde_json::Deserializer;
@@ -8,37 +10,9 @@ use std::hash::{Hash, Hasher};
 use std::io::BufReader;
 use std::path::PathBuf;
 use std::process::Command;
-use std::result;
 
 const OSASCRIPT_TEMPLATE: &'static str = include_str!("../osascript_template");
 const MAX_SCHEDULED_TIME_DIFF: i64 = 1;
-
-#[derive(Debug)]
-pub enum NoterError {
-    LoadError(std::io::Error),
-    ParseError(serde_json::Error),
-    Mess(&'static str),
-}
-
-impl From<std::io::Error> for NoterError {
-    fn from(e: std::io::Error) -> Self {
-        NoterError::LoadError(e)
-    }
-}
-
-impl From<serde_json::Error> for NoterError {
-    fn from(e: serde_json::Error) -> Self {
-        NoterError::ParseError(e)
-    }
-}
-
-impl From<&'static str> for NoterError {
-    fn from(e: &'static str) -> Self {
-        NoterError::Mess(e)
-    }
-}
-
-pub type Result<T> = result::Result<T, NoterError>;
 
 #[derive(Serialize, Deserialize, Debug)]
 enum Operation {
